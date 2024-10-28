@@ -1,0 +1,31 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    gap: 2px;
+}
+.cell {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+}
+.clear {
+    background-color: #e0ffe0;
+}
+.obstacle {
+    background-color: #ffcccc;
+}
+.robot {
+    background-color: #00f;
+    color: #fff;
+}
+.energy {
+    background-color: #ff0;
+}
