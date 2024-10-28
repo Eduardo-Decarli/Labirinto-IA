@@ -1,21 +1,19 @@
-
 const gridElement = document.getElementById('grid');
 const statusElement = document.getElementById('status');
 const startButton = document.getElementById('startButton');
 const SIZE = 10;
 const OBSTACLES = 15;
-const ENERGY_POSITIONS = [
-    { pos: [2, 2], points: 5 },
-    { pos: [4, 5], points: 5 },
-    { pos: [6, 8], points: 5 },
-    { pos: [3, 7], points: 10 },
-    { pos: [8, 3], points: 10 }
-];
+const ENERGY_COUNT = 5; // Número total de posições de energia
 
 let grid = Array.from({ length: SIZE }, () => Array(SIZE).fill('clear'));
 let robot = { x: 0, y: 0, energy: 50 };
 
 function generateMaze() {
+    // Limpa o labirinto e reinicia as posições do robô e obstáculos
+    grid = Array.from({ length: SIZE }, () => Array(SIZE).fill('clear'));
+    robot = { x: 0, y: 0, energy: 50 };
+
+    // Gera obstáculos
     for (let i = 0; i < OBSTACLES; i++) {
         let x, y;
         do {
@@ -24,9 +22,16 @@ function generateMaze() {
         } while ((x === 0 && y === 0) || (x === SIZE - 1 && y === SIZE - 1) || grid[x][y] === 'obstacle');
         grid[x][y] = 'obstacle';
     }
-    ENERGY_POSITIONS.forEach(({ pos, points }) => {
-        grid[pos[0]][pos[1]] = 'energy';
-    });
+
+    // Gera posições de energia aleatoriamente
+    for (let i = 0; i < ENERGY_COUNT; i++) {
+        let x, y;
+        do {
+            x = Math.floor(Math.random() * SIZE);
+            y = Math.floor(Math.random() * SIZE);
+        } while ((x === 0 && y === 0) || (x === SIZE - 1 && y === SIZE - 1) || grid[x][y] !== 'clear');
+        grid[x][y] = 'energy';
+    }
 }
 
 function drawMaze() {
