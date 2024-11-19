@@ -48,6 +48,7 @@ class Maze {
         this.generateObstacles(obstacles);
         this.generateEnergyCells(energyCount);
         this.ensureRobotCanMove(); // Garante que o robô não fique cercado
+        this.ensurePathExists();  // Garante que a saída esteja acessível
     }
 
     createEmptyGrid() {
@@ -87,7 +88,7 @@ class Maze {
             { x: 1, y: 0 }  // Abaixo
         ];
 
-        let hasPath = adjacentCells.some(({ x, y }) => 
+        let hasPath = adjacentCells.some(({ x, y }) =>
             x < this.size && y < this.size && this.grid[x][y].type !== 'obstacle'
         );
 
@@ -98,6 +99,42 @@ class Maze {
                 this.grid[cellToClear.x][cellToClear.y] = new Cell('clear');
             }
         }
+    }
+
+    ensurePathExists() {
+        // Verifica se existe um caminho entre a posição inicial e a saída
+        const visited = Array.from({ length: this.size }, () => Array(this.size).fill(false));
+        const queue = [{ x: 0, y: 0 }];
+
+        while (queue.length > 0) {
+            const { x, y } = queue.shift();
+            if (x === this.size - 1 && y === this.size - 1) {
+                // Caminho encontrado, saída não está bloqueada
+                return;
+            }
+
+            const directions = [
+                { dx: -1, dy: 0 }, // cima
+                { dx: 1, dy: 0 },  // baixo
+                { dx: 0, dy: 1 },  // direita
+                { dx: 0, dy: -1 }  // esquerda
+            ];
+
+            for (const { dx, dy } of directions) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx >= 0 && ny >= 0 && nx < this.size && ny < this.size && !visited[nx][ny] && this.grid[nx][ny].type !== 'obstacle') {
+                    visited[nx][ny] = true;
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+        }
+
+        // Se não encontrou um caminho, reposiciona obstáculos ou libera um caminho
+        // Aqui você pode gerar um novo labirinto ou tentar remover/realocar obstáculos.
+        console.log("Saída bloqueada, ajustando labirinto...");
+        this.generateObstacles(OBSTACLES);  // Regenerando obstáculos
+        this.ensurePathExists();  // Chama recursivamente para tentar garantir um caminho
     }
 
     draw(robot) {
