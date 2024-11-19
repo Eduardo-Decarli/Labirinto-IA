@@ -1,20 +1,102 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulação do Labirinto</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 2px;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            font-weight: bold;
+        }
+
+        .clear {
+            background-color: #e0ffe0;
+        }
+
+        .obstacle {
+            background-color: #ffcccc;
+        }
+
+        .robot {
+            background-color: #00f;
+            color: #fff;
+        }
+
+        .energy-5 {
+            background-color: #ffff00;
+        }
+
+        .energy-10 {
+            background-color: #ffa500;
+        }
+
+        .stats {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-    <h1>Simulação do Labirinto</h1>
-    <div class="grid" id="grid"></div>
-    <button id="startButton">Iniciar Caminhada</button>
-    <p id="status"></p>
+    <div class="container">
+        <h1>Simulação do Labirinto</h1>
+        
+        <div class="stats">
+            <h3>Status do Robô</h3>
+            <p>Energia Atual: <span id="energy">50</span></p>
+            <p>Status: <span id="status">Aguardando início...</span></p>
+        </div>
 
+        <div id="grid" class="grid"></div>
+        
+        <button id="startButton">Iniciar Caminhada</button>
+    </div>
     <script src="script.js"></script>
 </body>
-<script>
-    
-</script>
 </html>

@@ -1,16 +1,20 @@
 // Seletores de elementos HTML
 const gridElement = document.getElementById('grid');
 const statusElement = document.getElementById('status');
+const energyElement = document.getElementById('energy');
 const startButton = document.getElementById('startButton');
 
 // Configurações do labirinto
 const SIZE = 10;
-const OBSTACLES = 15;
-const ENERGY_COUNT = 5;
+const MIN_OBSTACLES = 10;
+const MAX_OBSTACLES = 25;
+const ENERGY_SPOTS_5 = 5;  // Quantidade de spots com +5 de energia
+const ENERGY_SPOTS_10 = 3; // Quantidade de spots com +10 de energia
 
 class Cell {
-    constructor(type = 'clear') {
+    constructor(type = 'clear', energyValue = 0) {
         this.type = type;
+        this.energyValue = energyValue;
     }
 
     isObstacle() {
@@ -18,7 +22,7 @@ class Cell {
     }
 
     isEnergy() {
-        return this.type === 'energy';
+        return this.type === 'energy-5' || this.type === 'energy-10';
     }
 }
 
@@ -27,32 +31,52 @@ class Robot {
         this.x = x;
         this.y = y;
         this.energy = energy;
+        this.initialEnergy = energy;
     }
 
     move(dx, dy) {
         this.x += dx;
         this.y += dy;
         this.energy--;
+        this.updateEnergyDisplay();
     }
 
-    collectEnergy() {
-        this.energy += 5;
+    collectEnergy(value) {
+        this.energy += value;
+        this.updateEnergyDisplay();
+    }
+
+    updateEnergyDisplay() {
+        energyElement.textContent = this.energy;
+    }
+
+    reset() {
+        this.x = 0;
+        this.y = 0;
+        this.energy = this.initialEnergy;
+        this.updateEnergyDisplay();
     }
 }
 
 class Maze {
-    constructor(size, obstacles, energyCount) {
+    constructor(size) {
         this.size = size;
         this.grid = this.createEmptyGrid();
         this.robot = new Robot();
-        this.generateObstacles(obstacles);
-        this.generateEnergyCells(energyCount);
-        this.ensureRobotCanMove(); // Garante que o robô não fique cercado
-        this.ensurePathExists();  // Garante que a saída esteja acessível
+        
+        // Gerar número aleatório de obstáculos entre MIN_OBSTACLES e MAX_OBSTACLES
+        const obstacleCount = Math.floor(Math.random() * (MAX_OBSTACLES - MIN_OBSTACLES + 1)) + MIN_OBSTACLES;
+        
+        this.generateObstacles(obstacleCount);
+        this.generateEnergyCells(ENERGY_SPOTS_5, 5);
+        this.generateEnergyCells(ENERGY_SPOTS_10, 10);
+        this.ensureValidPath();
     }
 
     createEmptyGrid() {
-        return Array.from({ length: this.size }, () => Array(this.size).fill().map(() => new Cell()));
+        return Array.from({ length: this.size }, () => 
+            Array(this.size).fill().map(() => new Cell())
+        );
     }
 
     generateObstacles(count) {
@@ -61,19 +85,20 @@ class Maze {
             do {
                 x = Math.floor(Math.random() * this.size);
                 y = Math.floor(Math.random() * this.size);
-            } while (this.isStartOrEnd(x, y) || this.grid[x][y].isObstacle());
+            } while (this.isStartOrEnd(x, y) || this.grid[x][y].type !== 'clear');
             this.grid[x][y] = new Cell('obstacle');
         }
     }
 
-    generateEnergyCells(count) {
+    generateEnergyCells(count, energyValue) {
+        const type = energyValue === 5 ? 'energy-5' : 'energy-10';
         for (let i = 0; i < count; i++) {
             let x, y;
             do {
                 x = Math.floor(Math.random() * this.size);
                 y = Math.floor(Math.random() * this.size);
             } while (this.isStartOrEnd(x, y) || this.grid[x][y].type !== 'clear');
-            this.grid[x][y] = new Cell('energy');
+            this.grid[x][y] = new Cell(type, energyValue);
         }
     }
 
@@ -81,100 +106,103 @@ class Maze {
         return (x === 0 && y === 0) || (x === this.size - 1 && y === this.size - 1);
     }
 
-    ensureRobotCanMove() {
-        // Garante que pelo menos uma célula adjacente à posição inicial esteja livre
-        const adjacentCells = [
-            { x: 0, y: 1 }, // Direita
-            { x: 1, y: 0 }  // Abaixo
-        ];
-
-        let hasPath = adjacentCells.some(({ x, y }) =>
-            x < this.size && y < this.size && this.grid[x][y].type !== 'obstacle'
-        );
-
-        // Se todas as células adjacentes forem obstáculos, libera uma aleatoriamente
-        if (!hasPath) {
-            const cellToClear = adjacentCells[Math.floor(Math.random() * adjacentCells.length)];
-            if (cellToClear.x < this.size && cellToClear.y < this.size) {
-                this.grid[cellToClear.x][cellToClear.y] = new Cell('clear');
-            }
+    ensureValidPath() {
+        // Garante que as posições inicial e final estejam livres
+        this.grid[0][0] = new Cell('clear');
+        this.grid[this.size - 1][this.size - 1] = new Cell('clear');
+        
+        // Verifica se existe um caminho válido usando BFS
+        if (!this.hasValidPath()) {
+            // Se não houver caminho válido, recria o labirinto
+            this.grid = this.createEmptyGrid();
+            const obstacleCount = Math.floor(Math.random() * (MAX_OBSTACLES - MIN_OBSTACLES + 1)) + MIN_OBSTACLES;
+            this.generateObstacles(obstacleCount);
+            this.generateEnergyCells(ENERGY_SPOTS_5, 5);
+            this.generateEnergyCells(ENERGY_SPOTS_10, 10);
+            this.ensureValidPath(); // Recursivamente verifica até encontrar um caminho válido
         }
     }
 
-    ensurePathExists() {
-        // Verifica se existe um caminho entre a posição inicial e a saída
+    hasValidPath() {
         const visited = Array.from({ length: this.size }, () => Array(this.size).fill(false));
-        const queue = [{ x: 0, y: 0 }];
+        const queue = [{x: 0, y: 0}];
+        visited[0][0] = true;
 
         while (queue.length > 0) {
-            const { x, y } = queue.shift();
-            if (x === this.size - 1 && y === this.size - 1) {
-                // Caminho encontrado, saída não está bloqueada
-                return;
-            }
+            const {x, y} = queue.shift();
+            if (x === this.size - 1 && y === this.size - 1) return true;
 
-            const directions = [
-                { dx: -1, dy: 0 }, // cima
-                { dx: 1, dy: 0 },  // baixo
-                { dx: 0, dy: 1 },  // direita
-                { dx: 0, dy: -1 }  // esquerda
-            ];
-
-            for (const { dx, dy } of directions) {
-                const nx = x + dx;
-                const ny = y + dy;
-                if (nx >= 0 && ny >= 0 && nx < this.size && ny < this.size && !visited[nx][ny] && this.grid[nx][ny].type !== 'obstacle') {
-                    visited[nx][ny] = true;
-                    queue.push({ x: nx, y: ny });
+            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            for (const [dx, dy] of directions) {
+                const newX = x + dx;
+                const newY = y + dy;
+                if (this.isValidMove(newX, newY) && !visited[newX][newY] && !this.grid[newX][newY].isObstacle()) {
+                    queue.push({x: newX, y: newY});
+                    visited[newX][newY] = true;
                 }
             }
         }
-
-        // Se não encontrou um caminho, reposiciona obstáculos ou libera um caminho
-        // Aqui você pode gerar um novo labirinto ou tentar remover/realocar obstáculos.
-        console.log("Saída bloqueada, ajustando labirinto...");
-        this.generateObstacles(OBSTACLES);  // Regenerando obstáculos
-        this.ensurePathExists();  // Chama recursivamente para tentar garantir um caminho
+        return false;
     }
 
-    draw(robot) {
+    isValidMove(x, y) {
+        return x >= 0 && x < this.size && y >= 0 && y < this.size;
+    }
+
+    draw() {
         gridElement.innerHTML = '';
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 const cell = document.createElement('div');
                 cell.className = `cell ${this.grid[i][j].type}`;
+                
                 if (this.grid[i][j].isEnergy()) {
-                    cell.innerText = '+5';
+                    cell.innerText = `+${this.grid[i][j].energyValue}`;
                 }
-                if (i === robot.x && j === robot.y) {
+                
+                if (i === this.robot.x && j === this.robot.y) {
                     cell.classList.add('robot');
                     cell.innerText = 'R';
                 }
+                
                 gridElement.appendChild(cell);
             }
         }
     }
 }
 
-
 class Game {
-    constructor(size, obstacles, energyCount) {
-        this.maze = new Maze(size, obstacles, energyCount);
+    constructor() {
+        this.maze = new Maze(SIZE);
+        this.isRunning = false;
     }
 
-    bfs() {
-        const queue = [{ x: this.maze.robot.x, y: this.maze.robot.y, energy: this.maze.robot.energy, path: [] }];
-        const visited = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
-        visited[this.maze.robot.x][this.maze.robot.y] = true;
+    async bfs() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        
+        const queue = [{
+            x: 0,
+            y: 0,
+            energy: this.maze.robot.energy,
+            path: []
+        }];
+        
+        const visited = new Set();
+        visited.add('0,0');
 
         while (queue.length > 0) {
             const current = queue.shift();
             const { x, y, energy, path } = current;
 
-            // Verifica se chegou na saída
+            if (energy <= 0) {
+                continue;
+            }
+
             if (x === SIZE - 1 && y === SIZE - 1) {
                 statusElement.innerText = 'Chegada na saída!';
-                this.animatePath([...path, { x, y }]);
+                await this.animatePath([...path, { x, y }]);
+                this.isRunning = false;
                 return;
             }
 
@@ -188,48 +216,61 @@ class Game {
             for (const { dx, dy } of directions) {
                 const nx = x + dx;
                 const ny = y + dy;
+                const key = `${nx},${ny}`;
 
-                if (nx >= 0 && ny >= 0 && nx < SIZE && ny < SIZE && !visited[nx][ny]) {
-                    if (this.maze.grid[nx][ny].isObstacle()) continue;
-
+                if (this.maze.isValidMove(nx, ny) && !visited.has(key) && !this.maze.grid[nx][ny].isObstacle()) {
                     let newEnergy = energy - 1;
                     if (this.maze.grid[nx][ny].isEnergy()) {
-                        newEnergy += 5;
+                        newEnergy += this.maze.grid[nx][ny].energyValue;
                     }
 
-                    if (newEnergy >= 0) {
-                        queue.push({ x: nx, y: ny, energy: newEnergy, path: [...path, { x, y }] });
-                        visited[nx][ny] = true;
-                    }
+                    queue.push({
+                        x: nx,
+                        y: ny,
+                        energy: newEnergy,
+                        path: [...path, { x, y }]
+                    });
+                    visited.add(key);
                 }
             }
         }
 
         statusElement.innerText = 'Sem energia! O robô não conseguiu chegar à saída.';
+        this.isRunning = false;
     }
 
-    animatePath(path) {
-        let step = 0;
-        const interval = setInterval(() => {
-            if (step >= path.length) {
-                clearInterval(interval);
-                return;
+    async animatePath(path) {
+        for (const position of path) {
+            this.maze.robot.x = position.x;
+            this.maze.robot.y = position.y;
+            
+            // Coleta energia se estiver em uma célula de energia
+            if (this.maze.grid[position.x][position.y].isEnergy()) {
+                this.maze.robot.collectEnergy(this.maze.grid[position.x][position.y].energyValue);
+                // Limpa a célula após coletar a energia
+                this.maze.grid[position.x][position.y] = new Cell('clear');
+            } else {
+                this.maze.robot.move(0, 0); // Apenas para atualizar a energia
             }
-            const { x, y } = path[step];
-            this.maze.robot.x = x;
-            this.maze.robot.y = y;
-            this.maze.draw(this.maze.robot);
-            step++;
-        }, 200);
+            
+            this.maze.draw();
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
     }
 
     start() {
-        this.maze = new Maze(SIZE, OBSTACLES, ENERGY_COUNT);
-        this.maze.draw(this.maze.robot);
+        if (this.isRunning) return;
+        
+        statusElement.innerText = 'Iniciando...';
+        this.maze = new Maze(SIZE);
+        this.maze.robot.reset();
+        this.maze.draw();
         this.bfs();
     }
 }
 
-// Inicializa o jogo ao clicar no botão "Start"
-const game = new Game(SIZE, OBSTACLES, ENERGY_COUNT);
+// Inicializa o jogo e adiciona evento ao botão
+const game = new Game();
+game.maze.draw(); // Desenha o labirinto inicial
+
 startButton.addEventListener('click', () => game.start());
