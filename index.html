@@ -22,42 +22,50 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
+        .grid-container{
+            padding: 3px;
+            background-color: gray;
+            border-radius: 5px;
+        }
+
         .grid {
             display: grid;
-            grid-template-columns: repeat(10, 40px);
-            gap: 2px;
-            margin: 20px auto;
-        }
+            grid-template-columns: repeat(10, 40px); 
+            gap: px; 
+        } 
 
         .cell {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ccc;
-            font-weight: bold;
-        }
+            width: 40px; 
+            height: 40px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: 0px solid #ccc; 
+            background-size: cover; 
+        } 
 
         .clear {
-            background-color: #e0ffe0;
-        }
+            background-image: url('utilities/Caminho.png');
+        } 
 
-        .obstacle {
-            background-color: #ffcccc;
-        }
+        .obstacle { 
+            background-image: url('utilities/Bloqueio.png');
+        } 
 
-        .robot {
-            background-color: #00f;
-            color: #fff;
+        .robot { 
+            background-image: url('utilities/Personagemf.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: transparent;
         }
 
         .energy-5 {
-            background-color: #ffff00;
+            background-image: url('utilities/Energia.png');
         }
 
         .energy-10 {
-            background-color: #ffa500;
+            background-image: url('utilities/Energia2.png');
         }
 
         .stats {
@@ -93,7 +101,9 @@
             <p>Status: <span id="status">Aguardando início...</span></p>
         </div>
 
-        <div id="grid" class="grid"></div>
+        <div class="grid-container">
+            <div id="grid" class="grid"></div>
+        </div>
         
         <button id="startButton">Iniciar Caminhada</button>
     </div>

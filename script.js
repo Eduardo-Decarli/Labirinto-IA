@@ -1,15 +1,13 @@
-// Seletores de elementos HTML
 const gridElement = document.getElementById('grid');
 const statusElement = document.getElementById('status');
 const energyElement = document.getElementById('energy');
 const startButton = document.getElementById('startButton');
 
-// Configurações do labirinto
 const SIZE = 10;
 const MIN_OBSTACLES = 10;
 const MAX_OBSTACLES = 25;
-const ENERGY_SPOTS_5 = 5;  // Quantidade de spots com +5 de energia
-const ENERGY_SPOTS_10 = 3; // Quantidade de spots com +10 de energia
+const ENERGY_SPOTS_5 = 5;
+const ENERGY_SPOTS_10 = 3;
 
 class Cell {
     constructor(type = 'clear', energyValue = 0) {
@@ -64,7 +62,6 @@ class Maze {
         this.grid = this.createEmptyGrid();
         this.robot = new Robot();
         
-        // Gerar número aleatório de obstáculos entre MIN_OBSTACLES e MAX_OBSTACLES
         const obstacleCount = Math.floor(Math.random() * (MAX_OBSTACLES - MIN_OBSTACLES + 1)) + MIN_OBSTACLES;
         
         this.generateObstacles(obstacleCount);
@@ -78,6 +75,7 @@ class Maze {
             Array(this.size).fill().map(() => new Cell())
         );
     }
+
 
     generateObstacles(count) {
         for (let i = 0; i < count; i++) {
@@ -107,19 +105,16 @@ class Maze {
     }
 
     ensureValidPath() {
-        // Garante que as posições inicial e final estejam livres
         this.grid[0][0] = new Cell('clear');
         this.grid[this.size - 1][this.size - 1] = new Cell('clear');
         
-        // Verifica se existe um caminho válido usando BFS
         if (!this.hasValidPath()) {
-            // Se não houver caminho válido, recria o labirinto
             this.grid = this.createEmptyGrid();
             const obstacleCount = Math.floor(Math.random() * (MAX_OBSTACLES - MIN_OBSTACLES + 1)) + MIN_OBSTACLES;
             this.generateObstacles(obstacleCount);
             this.generateEnergyCells(ENERGY_SPOTS_5, 5);
             this.generateEnergyCells(ENERGY_SPOTS_10, 10);
-            this.ensureValidPath(); // Recursivamente verifica até encontrar um caminho válido
+            this.ensureValidPath(); 
         }
     }
 
@@ -155,11 +150,6 @@ class Maze {
             for (let j = 0; j < this.size; j++) {
                 const cell = document.createElement('div');
                 cell.className = `cell ${this.grid[i][j].type}`;
-                
-                if (this.grid[i][j].isEnergy()) {
-                    cell.innerText = `+${this.grid[i][j].energyValue}`;
-                }
-                
                 if (i === this.robot.x && j === this.robot.y) {
                     cell.classList.add('robot');
                     cell.innerText = 'R';
@@ -207,10 +197,10 @@ class Game {
             }
 
             const directions = [
-                { dx: -1, dy: 0 }, // cima
-                { dx: 1, dy: 0 },  // baixo
-                { dx: 0, dy: 1 },  // direita
-                { dx: 0, dy: -1 }  // esquerda
+                { dx: -1, dy: 0 }, 
+                { dx: 1, dy: 0 },  
+                { dx: 0, dy: 1 },  
+                { dx: 0, dy: -1 }  
             ];
 
             for (const { dx, dy } of directions) {
@@ -244,13 +234,11 @@ class Game {
             this.maze.robot.x = position.x;
             this.maze.robot.y = position.y;
             
-            // Coleta energia se estiver em uma célula de energia
             if (this.maze.grid[position.x][position.y].isEnergy()) {
                 this.maze.robot.collectEnergy(this.maze.grid[position.x][position.y].energyValue);
-                // Limpa a célula após coletar a energia
                 this.maze.grid[position.x][position.y] = new Cell('clear');
             } else {
-                this.maze.robot.move(0, 0); // Apenas para atualizar a energia
+                this.maze.robot.move(0, 0); 
             }
             
             this.maze.draw();
@@ -269,8 +257,7 @@ class Game {
     }
 }
 
-// Inicializa o jogo e adiciona evento ao botão
 const game = new Game();
-game.maze.draw(); // Desenha o labirinto inicial
+game.maze.draw();
 
 startButton.addEventListener('click', () => game.start());
