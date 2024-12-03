@@ -1,5 +1,7 @@
 # **Labirinto Condutivo por Inteligência Artificial**
 
+Link do Repositório no GitHub: **https://github.com/Eduardo-Decarli/Labirinto-IA**
+
 ## **Descrição**
 Este projeto é uma simulação interativa que demonstra a navegação de um robô em um labirinto gerado proceduralmente, utilizando o algoritmo de Busca em Largura (**BFS**). O robô enfrenta desafios como obstáculos e energia limitada, necessitando gerenciar recursos e buscar pontos de recarga ao longo do caminho.  
 
